@@ -541,51 +541,22 @@ def _(np, parse):
 
 @app.cell
 def _(np, parse):
-    from collections import defaultdict
-
 
     def diagnostic_(stl_file):
-        # Parse the STL file
         triangles, normals, _ = parse(stl_file)
 
-        # Initialize results
-        diagnostics = {}
-
-        # --- Positive Octant Rule ---
-        count_neg = 0  # Count of negative coordinates
+        # Positive Octant Rule 
+        count_neg = 0  
         for triangle in triangles:
             for elem in triangle:
                 count_neg += sum(coord < 0 for coord in elem)
 
         if count_neg == 0:
-            diagnostics["Positive Octant Rule"] = "Verified"
+            octant_result = "Verified"
         else:
             percentage_violation = (count_neg / (len(triangles) * 9)) * 100
-            diagnostics["Positive Octant Rule"] = f"Not verified: {percentage_violation:.2f}% of coordinates are negative"
+            octant_result = f"Not verified: {percentage_violation:.2f}% of coordinates are negative"
 
-        """# --- Orientation Rule ---
-        count_orientation = 0  # Count of violated normals
-        for i, normal in enumerate(normals):
-            norm = np.linalg.norm(normal)
-            # Check if the normal is approximately a unit vector
-            if not 0.95 <= norm <= 1.05:
-                count_orientation += 1
-
-
-            # Check if the normal follows the right-hand rule
-            else:  
-                triangle = triangles[i]
-                AB = triangle[1] - triangle[0]
-                AC = triangle[2] - triangle[0]
-                cross_product = np.cross(AB, AC)
-                if not np.allclose(normal, cross_product / np.linalg.norm(cross_product)):
-                    count_orientation += 1
-
-        if count_orientation == 0:
-            diagnostics["Orientation Rule"] = "Verified"
-        else:
-            percentage_violation = (count_orientation / len(normals)) * 100
-            diagnostics["Orientation Rule"] = f"Not verified: {percentage_violation:.2f}% of normals violated the rule" """
 
         #Orientation rule
         count_orientation=0 # compte nombre de normales qui ne verifient pas la règle d'orientation
@@ -610,7 +581,7 @@ def _(np, parse):
             orientation_result = f"Orientation rule not verified for {(count_orientation/(len(normals)))*100: 2f} % of the normals"
 
     # Shared edge rule 
-        lonely_edges = [] #ressence les bords seuls
+        lonely_edges = [] 
 
         for i in range(len(triangles)):
             A = tuple(triangles[i][0])  
@@ -641,7 +612,7 @@ def _(np, parse):
         else: 
             edges_result = f"Shared edge rule not verified for {(len(lonely_edges)/(3*len(triangles)))*100: .2f} % of the edges"
 
-        # --- Ascending Rule ---
+        # Ascending Rule
         count_ascending_violations = 0
         barycenters = [np.mean(triangle, axis=0) for triangle in triangles]
         z_coords = [barycenter[2] for barycenter in barycenters]
@@ -651,13 +622,13 @@ def _(np, parse):
                 count_ascending_violations += 1
 
         if count_ascending_violations == 0:
-            diagnostics["Ascending Rule"] = "Verified"
+            escending_result = "Verified"
         else:
             percentage_violation = (count_ascending_violations / len(z_coords)) * 100
-            diagnostics["Ascending Rule"] = f"Not verified: {percentage_violation:.2f}% of barycenters violate the z-coordinate order"
+            ascending_result = f"Not verified: {percentage_violation:.2f}% of barycenters violate the z-coordinate order"
 
-        return diagnostics,orientation_result, edges_result
-    return defaultdict, diagnostic_
+        return octant_result,orientation_result, edges_result, ascending_result
+    return (diagnostic_,)
 
 
 @app.cell
