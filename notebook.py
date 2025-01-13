@@ -1,17 +1,17 @@
 import marimo
 
-__generated_with = "0.9.17"
+__generated_with = "0.10.2"
 app = marimo.App()
 
 
 @app.cell
-def __(mo):
+def _(mo):
     mo.md("""#3D Geometry File Formats""")
     return
 
 
 @app.cell
-def __(mo):
+def _(mo):
     mo.md(
         r"""
         ## About STL
@@ -26,13 +26,13 @@ def __(mo):
 
 
 @app.cell
-def __(mo, show):
+def _(mo, show):
     mo.show_code(show("data/teapot.stl", theta=45.0, phi=30.0, scale=2))
     return
 
 
 @app.cell
-def __(mo):
+def _(mo):
     with open("data/teapot.stl", mode="rt", encoding="utf-8") as _file:
         teapot_stl = _file.read()
 
@@ -44,21 +44,151 @@ def __(mo):
 
     The `data/teapot.stl` file provides an example of the STL ASCII format. It is quite large (more than 60000 lines) and looks like that:
     """
-    +
-    f"""```
+        + f"""```
     {teapot_stl_excerpt}
     ```
     """
-    +
-
-    """
+        + """
     """
     )
     return teapot_stl, teapot_stl_excerpt
 
 
 @app.cell
-def __(mo):
+def _():
+    ## Essayons d'abord de créer une seule face
+    stl_carre = """ 
+    solid carre
+        facet normal 0 0 1
+            outer loop
+                vertex 0 0 0
+                vertex 1 0 0 
+                vertex 0 1 0 
+            endloop
+        endfacet
+        facet normal 0 0 1
+            outer loop
+                vertex 1 1 0
+                vertex 0 1 0 
+                vertex 1 0 0 
+            endloop
+        endfacet
+    endsolid carre
+    """
+    # Define the file path
+    file_path = "data/carré.stl"
+
+    # Write the STL data to the file
+    with open(file_path, "w") as file:
+        file.write(stl_carre)
+
+    print(f"STL file saved as {file_path}")
+    return file, file_path, stl_carre
+
+
+@app.cell
+def _():
+    ## Construisons maintenant le cube
+    stl_cube = """ 
+    solid cube
+        facet normal 0 0 1
+            outer loop
+                vertex 0 0 0
+                vertex 0 1 0 
+                vertex 1 0 0 
+            endloop
+        endfacet
+        facet normal 0 0 1
+            outer loop
+                vertex 1 1 0
+                vertex 1 0 0 
+                vertex 0 1 0
+            endloop
+        endfacet
+        facet normal 1 0 0
+            outer loop
+                vertex 0 0 0 
+                vertex 0 0 1
+                vertex 0 1 0
+            endloop
+        endfacet
+        facet normal 1 0 0
+            outer loop
+                vertex 0 1 1 
+                vertex 0 1 0
+                vertex 0 0 1
+            endloop
+        endfacet
+        facet normal 0 -1 0 
+            outer loop 
+                vertex 0 1 1 
+                vertex 1 1 1
+                vertex 0 1 0 
+            endloop
+        facet normal 0 -1 0 
+            outer loop 
+                vertex 1 1 0 
+                vertex 0 1 0
+                vertex 1 1 1 
+            endloop
+        endfacet
+        facet normal 0 1 0 
+            outer loop 
+                vertex 0 0 0 
+                vertex 1 0 1
+                vertex 0 0 1
+            endloop 
+        endfacet
+        facet normal 0 1 0 
+            outer loop 
+                vertex 0 0 0 
+                vertex 1 0 0 
+                vertex 1 0 1
+            endloop
+        endfacet
+        facet normal -1 0 0
+            outer loop
+                vertex 1 0 0
+                vertex 1 1 0
+                vertex 1 0 1
+            endloop
+        endfacet
+        facet normal -1 0 0 
+            outer loop
+                vertex 1 0 1 
+                vertex 1 1 0
+                vertex 1 1 1
+            endloop
+        endfacet
+        facet normal 0 0 -1
+            outer loop
+                vertex 0 0 1 
+                vertex 1 0 1
+                vertex 1 1 1
+            endloop
+        endfacet
+        facet normal 0 0 -1
+            outer loop 
+                vertex 0 1 1
+                vertex 0 0 1
+                vertex 1 1 1
+            endloop 
+        endfacet
+    endsolid cube
+    """
+    # Define the file path
+    file_path2 = "data/cube.stl"
+
+    # Write the STL data to the file
+    with open(file_path2, "w") as file2:
+        file2.write(stl_cube)
+
+    print(f"STL file saved as {file_path2}")
+    return file2, file_path2, stl_cube
+
+
+@app.cell
+def _(mo):
     mo.md(f"""
 
       - Study the [{mo.icon("mdi:wikipedia")} STL (file format)](https://en.wikipedia.org/wiki/STL_(file_format)) page (or other online references) to become familiar the format.
@@ -72,13 +202,45 @@ def __(mo):
 
 
 @app.cell
-def __(mo):
+def _(mo):
     mo.md(r"""## STL & NumPy""")
     return
 
 
 @app.cell
-def __(mo):
+def _(np):
+    def make_STL(triangles, normals, name=None):
+        stl_str = f"solid {name} \n"
+        for i in range(len(triangles)):
+            if normals:
+                stl_str += f"\tfacet normal {normals[i][0]} {normals[i][1]}    {normals[i][2]}\n\t\touter loop\n\t\t\t"
+            else: 
+                AB=triangles[i][1]- triangles[i][0]
+                BC=triangles[i][2]- triangles[i][1]
+                stl_str += f"\tfacet normal {np.cross(AB,BC)[0]} {np.cross(AB,BC)[1]} {np.cross(AB,BC)[2]}\n\t\touter loop\n\t\t\t"
+            stl_str+=f"vertex {triangles[i][0][0]} {triangles[i][0][1]} {triangles[i][0][2]}\n\t\t\t"
+            stl_str+=f"vertex {triangles[i][1][0]} {triangles[i][1][1]} {triangles[i][1][2]}\n\t\t\t"
+            stl_str+=f"vertex {triangles[i][2][0]} {triangles[i][2][1]} {triangles[i][2][2]}\n\t\t"
+            stl_str+="endloop\n\tendfacet\n"
+        stl_str +=f"endsolid {name}"
+        return (stl_str)
+    return (make_STL,)
+
+
+@app.cell
+def _(make_STL, np):
+    print (make_STL(np.array(
+        [
+            [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
+            [[1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]],
+        ],
+        dtype=np.float32,
+    ),normals=None, name="square"))
+    return
+
+
+@app.cell
+def _(mo):
     mo.md(rf"""
 
     ### NumPy to STL
@@ -147,7 +309,29 @@ def __(mo):
 
 
 @app.cell
-def __(mo):
+def _(np):
+    import copy
+    def tokenize(file):
+        with open(file, mode="rt", encoding="us-ascii") as file:
+            str_file = file.read()
+        liste_mots=str_file.split()
+        liste_mots_copy= copy.deepcopy(liste_mots)
+        for i, mot in enumerate(liste_mots): 
+            if mot.replace('.', '', 1).replace('-', '', 1).isdigit(): #isdigit ne marche pas directement avec des flottants!!
+                liste_mots_copy[i]=np.float32(mot)
+
+        return liste_mots_copy
+    return copy, tokenize
+
+
+@app.cell
+def _(tokenize):
+    print(tokenize("data/teapot.stl"))
+    return
+
+
+@app.cell
+def _(mo):
     mo.md(
         """
         ### STL to NumPy
@@ -193,7 +377,35 @@ def __(mo):
 
 
 @app.cell
-def __(mo):
+def _(np, tokenize):
+    def parse (stl_file):
+        tokens=tokenize(stl_file)
+        triangles = []
+        normals = []
+        if tokens[2]== "facet":
+                name= tokens[1]
+        else:
+            name = ""
+        for i in range (len(tokens)): 
+            if tokens[i] == "normal":
+                normals.append([tokens[i+1],tokens[i+2],tokens[i+3]])
+            if tokens[i]=="loop":
+                triangles.append ([[tokens[i+2],tokens[i+3],tokens[i+4]],[tokens[i+6],tokens[i+7],tokens[i+8]],[tokens[i+10],tokens[i+11],tokens[i+12]]])
+        return (np.array(triangles, dtype=np.float32),np.array(normals, dtype=np.float32),name)
+    return (parse,)
+
+
+@app.cell
+def _(parse):
+    triangles, normals, name = parse("data/teapot.stl")
+    print(repr(triangles))
+    print(repr(normals))
+    print(repr(name))
+    return name, normals, triangles
+
+
+@app.cell
+def _(mo):
     mo.md(
         """
         Implement a `parse` function
@@ -256,7 +468,206 @@ def __(mo):
 
 
 @app.cell
-def __(mo):
+def _(np, parse):
+    def diagnostic_trop_long (stl_file):
+        triangles, normals,_ = parse (stl_file)
+        #positive octant rule
+        count_neg=0 #Compte le nombre de coordonnées négatives
+        for elem in triangles:
+            for i in range (3):
+                for j in range (3):
+                    if elem[i][j]<0:
+                        count_neg+=1
+        octant_result =""
+        if count_neg==0:
+            octant_result= "Positive octant rule verified"
+        else:
+            octant_result= f"Positive octant not verified for {(count_neg/(len(triangles)*9))*100} % of the coordinates"
+
+        #Orientation rule
+        count_orientation=0 # compte nombre de normales qui ne verifient pas la règle d'orientation
+        for i in range (len(normals)):
+            if (np.sqrt(normals[i][0]**2 +normals[i][1]**2 +normals[i][2]**2))<0.95 or (np.sqrt(normals[i][0]**2 +normals[i][1]**2 +normals[i][2]**2))>1.05: # On laisse une marge d'erreur due au calcul et aux arrondis en python
+                count_orientation+=1
+            else:
+                triangle_associe = triangles[i]
+                AB=triangles[i][1]- triangles[i][0]
+                BC=triangles[i][2]- triangles[i][1]
+                pdt_vect =np.cross(AB,BC)
+                if not np.array_equal(normals[i],pdt_vect):
+                    count_orientation +=1
+
+        orientation_result=""
+        if count_orientation==0:
+            orientation_result = "Orientation rule verified"
+        else:
+            orientation_result = f"Orientation rule not verified for {(count_orientation/(len(normals)))*100} % of the normals"
+
+        # Shared edge rule 
+        lonely_edges = [] #ressence les bords seuls
+
+        for i in range(len(triangles)):
+            A = tuple(triangles[i][0])  
+            B = tuple(triangles[i][1])  
+            C = tuple(triangles[i][2])  
+
+            edge_AB = tuple(sorted([A, B]))  # Trier pour éviter l'ordre
+            edge_BC = tuple(sorted([B, C]))  
+            edge_CA = tuple(sorted([C, A]))  
+
+            if edge_AB in lonely_edges:
+                lonely_edges.remove(edge_AB)  # On supprime l'élément trouvé
+            else:
+                lonely_edges.append(edge_AB)
+
+            if edge_BC in lonely_edges:
+                lonely_edges.remove(edge_BC)  
+            else:
+                lonely_edges.append(edge_BC)
+
+            if edge_CA in lonely_edges:
+                lonely_edges.remove(edge_CA)  
+            else:
+                lonely_edges.append(edge_CA)
+        edges_result =""
+        if len(lonely_edges) == 0:
+            edges_result= "Shared edge rule verified"
+        else: 
+            edges_result = f"Shared edge rule not verified for {(len(lonely_edges)/(3*len(triangles)))*100} % of the edges"
+        print (len(lonely_edges))
+        return octant_result, orientation_result, edges_result
+    return (diagnostic_trop_long,)
+
+
+@app.cell
+def _(np, parse):
+    from collections import defaultdict
+
+
+    def diagnostic_(stl_file):
+        # Parse the STL file
+        triangles, normals, _ = parse(stl_file)
+
+        # Initialize results
+        diagnostics = {}
+
+        # --- Positive Octant Rule ---
+        count_neg = 0  # Count of negative coordinates
+        for triangle in triangles:
+            for elem in triangle:
+                count_neg += sum(coord < 0 for coord in elem)
+
+        if count_neg == 0:
+            diagnostics["Positive Octant Rule"] = "Verified"
+        else:
+            percentage_violation = (count_neg / (len(triangles) * 9)) * 100
+            diagnostics["Positive Octant Rule"] = f"Not verified: {percentage_violation:.2f}% of coordinates are negative"
+
+        """# --- Orientation Rule ---
+        count_orientation = 0  # Count of violated normals
+        for i, normal in enumerate(normals):
+            norm = np.linalg.norm(normal)
+            # Check if the normal is approximately a unit vector
+            if not 0.95 <= norm <= 1.05:
+                count_orientation += 1
+
+
+            # Check if the normal follows the right-hand rule
+            else:  
+                triangle = triangles[i]
+                AB = triangle[1] - triangle[0]
+                AC = triangle[2] - triangle[0]
+                cross_product = np.cross(AB, AC)
+                if not np.allclose(normal, cross_product / np.linalg.norm(cross_product)):
+                    count_orientation += 1
+
+        if count_orientation == 0:
+            diagnostics["Orientation Rule"] = "Verified"
+        else:
+            percentage_violation = (count_orientation / len(normals)) * 100
+            diagnostics["Orientation Rule"] = f"Not verified: {percentage_violation:.2f}% of normals violated the rule" """
+
+        #Orientation rule
+        count_orientation=0 # compte nombre de normales qui ne verifient pas la règle d'orientation
+        for i,normal in enumerate (normals):
+            if not np.allclose (np.linalg.norm(normal), 1):
+            # On laisse une marge d'erreur due au calcul et aux arrondis en python
+                count_orientation+=1
+            else:
+                triangle_associe = triangles[i]
+                AB=triangles[i][1]- triangles[i][0]
+                BC=triangles[i][2]- triangles[i][1]
+                pdt_vect =np.cross(AB,BC)
+
+                if not np.allclose(normal/np.linalg.norm(normal),pdt_vect/np.linalg.norm(pdt_vect)):
+    #On normalise les deux vecteurs pour ne comparer que leur orientation!  
+                    count_orientation +=1
+
+        orientation_result=""
+        if count_orientation==0:
+            orientation_result = "Orientation rule verified"
+        else:
+            orientation_result = f"Orientation rule not verified for {(count_orientation/(len(normals)))*100: 2f} % of the normals"
+
+    # Shared edge rule 
+        lonely_edges = [] #ressence les bords seuls
+
+        for i in range(len(triangles)):
+            A = tuple(triangles[i][0])  
+            B = tuple(triangles[i][1])  
+            C = tuple(triangles[i][2])  
+
+            edge_AB = tuple(sorted([A, B]))  # Trier pour éviter l'ordre
+            edge_BC = tuple(sorted([B, C]))  
+            edge_CA = tuple(sorted([C, A]))  
+
+            if edge_AB in lonely_edges:
+                lonely_edges.remove(edge_AB)  # On supprime l'élément trouvé
+            else:
+                lonely_edges.append(edge_AB)
+
+            if edge_BC in lonely_edges:
+                lonely_edges.remove(edge_BC)  
+            else:
+                lonely_edges.append(edge_BC)
+
+            if edge_CA in lonely_edges:
+                lonely_edges.remove(edge_CA)  
+            else:
+                lonely_edges.append(edge_CA)
+        edges_result =""
+        if len(lonely_edges) == 0:
+            edges_result= "Shared edge rule verified"
+        else: 
+            edges_result = f"Shared edge rule not verified for {(len(lonely_edges)/(3*len(triangles)))*100: .2f} % of the edges"
+
+        # --- Ascending Rule ---
+        count_ascending_violations = 0
+        barycenters = [np.mean(triangle, axis=0) for triangle in triangles]
+        z_coords = [barycenter[2] for barycenter in barycenters]
+
+        for i in range(1, len(z_coords)):
+            if z_coords[i] < z_coords[i - 1]:
+                count_ascending_violations += 1
+
+        if count_ascending_violations == 0:
+            diagnostics["Ascending Rule"] = "Verified"
+        else:
+            percentage_violation = (count_ascending_violations / len(z_coords)) * 100
+            diagnostics["Ascending Rule"] = f"Not verified: {percentage_violation:.2f}% of barycenters violate the z-coordinate order"
+
+        return diagnostics,orientation_result, edges_result
+    return defaultdict, diagnostic_
+
+
+@app.cell
+def _(diagnostic_):
+    diagnostic_("data/teapot.stl")
+    return
+
+
+@app.cell
+def _(mo):
     mo.md(
         rf"""
     ## Rules & Diagnostics
@@ -290,7 +701,73 @@ def __(mo):
 
 
 @app.cell
-def __(mo):
+def _(make_STL, np, tokenize):
+    def obj_to_stl(obj_file):
+        liste_obj = tokenize(obj_file)
+        triangles =[]
+        normals=None
+        name=""
+        count=0
+        while liste_obj[count]!='f':
+            count+=1
+        coordinates,ind_facets=liste_obj[:count],liste_obj[count+1:]
+        coordinates = [elem for elem in coordinates if elem != 'v']
+        vertices =[coordinates[i:i + 3] for i in range(0,len(coordinates),(3))]
+        ind_facets= [elem for elem in ind_facets if elem != 'f']
+
+        facets = [ind_facets[i:i + 3] for i in range(0,len(ind_facets),(3))]
+        for elem in facets:
+            triangles.append([vertices[int(elem[0])-1],vertices[int(elem[1])-1],vertices[int(elem[2])-1]])
+        return make_STL(np.array(triangles),normals,name)
+    return (obj_to_stl,)
+
+
+@app.cell
+def _():
+    #On crée un c&rré en OBJ
+
+    import os
+
+    def create_square_obj_ascii(filepath):
+        # Définir les sommets du carré
+        vertices = [
+            "v 0.0 0.0 0.0",  # Sommet 1
+            "v 1.0 0.0 0.0",  # Sommet 2
+            "v 1.0 1.0 0.0",  # Sommet 3
+            "v 0.0 1.0 0.0"   # Sommet 4
+        ]
+
+        # Définir la face du carré (1 face composée de 4 sommets)
+        faces = [
+            "f 1 2 3 f 2 3 4"  # Indices des sommets (1-indexé)
+        ]
+
+        # Vérifier si le dossier existe, sinon le créer
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+        # Écrire les données dans le fichier en mode ASCII
+        with open(filepath, 'w', encoding='ascii') as obj_file:
+            obj_file.write("\n".join(vertices) + "\n")
+            obj_file.write("\n".join(faces) + "\n")
+
+    # Chemin du fichier où enregistrer le carré
+    output_path = "data/carre.obj"
+
+    # Appeler la fonction pour créer et enregistrer le fichier
+    create_square_obj_ascii(output_path)
+
+    print(f"Carré OBJ (ASCII) enregistré sous : {output_path}")
+    return create_square_obj_ascii, os, output_path
+
+
+@app.cell
+def _(obj_to_stl):
+    print(obj_to_stl("data/carre.obj"))
+    return
+
+
+@app.cell
+def _(mo):
     mo.md(
     rf"""
     ## OBJ Format
@@ -322,13 +799,13 @@ def __(mo):
 
 
 @app.cell
-def __(mo, show):
+def _(mo, show):
     mo.show_code(show("data/bunny.obj", scale="1.5"))
     return
 
 
 @app.cell
-def __(mo):
+def _(mo):
     mo.md(
         """
         Study the specification of the OBJ format (search for suitable sources online),
@@ -339,7 +816,12 @@ def __(mo):
 
 
 @app.cell
-def __(mo):
+def _():
+    return
+
+
+@app.cell
+def _(mo):
     mo.md(
         rf"""
     ## Binary STL
@@ -363,13 +845,13 @@ def __(mo):
 
 
 @app.cell
-def __(mo, show):
+def _(mo, show):
     mo.show_code(show("data/dragon.stl", theta=75.0, phi=-20.0, scale=1.7))
     return
 
 
 @app.cell
-def __(make_STL, np):
+def _(make_STL, np):
     def STL_binary_to_text(stl_filename_in, stl_filename_out):
         with open(stl_filename_in, mode="rb") as file:
             _ = file.read(80)
@@ -387,7 +869,14 @@ def __(make_STL, np):
 
 
 @app.cell
-def __(mo):
+def _(STL_binary_to_text, mo, show):
+    STL_binary_to_text("data/dragon.stl", "data/dragon_texte_test.stl")
+    mo.show_code(show("data/dragon_texte_test.stl", theta=75.0, phi=-20.0, scale=1.7))
+    return
+
+
+@app.cell
+def _(mo):
     mo.md(rf"""## Constructive Solid Geometry (CSG)
 
     Have a look at the documentation of [{mo.icon("mdi:github")}fogleman/sdf](https://github.com/fogleman/) and study the basics. At the very least, make sure that you understand what the code below does:
@@ -396,7 +885,7 @@ def __(mo):
 
 
 @app.cell
-def __(X, Y, Z, box, cylinder, mo, show, sphere):
+def _(X, Y, Z, box, cylinder, mo, show, sphere):
     demo_csg = sphere(1) & box(1.5)
     _c = cylinder(0.5)
     demo_csg = demo_csg - (_c.orient(X) | _c.orient(Y) | _c.orient(Z))
@@ -406,13 +895,13 @@ def __(X, Y, Z, box, cylinder, mo, show, sphere):
 
 
 @app.cell
-def __(mo):
+def _(mo):
     mo.md("""ℹ️ **Remark.** The same result can be achieved in a more procedural style, with:""")
     return
 
 
 @app.cell
-def __(
+def _(
     box,
     cylinder,
     difference,
@@ -440,7 +929,12 @@ def __(
 
 
 @app.cell
-def __(mo):
+def _():
+    return
+
+
+@app.cell
+def _(mo):
     mo.md(
         rf"""
     ## JupyterCAD
@@ -462,19 +956,19 @@ def __(mo):
 
 
 @app.cell
-def __(mo):
+def _(mo):
     mo.md("""## Appendix""")
     return
 
 
 @app.cell
-def __(mo):
+def _(mo):
     mo.md("""### Dependencies""")
     return
 
 
 @app.cell
-def __():
+def _():
     # Python Standard Library
     import json
 
@@ -524,13 +1018,13 @@ def __():
 
 
 @app.cell
-def __(mo):
+def _(mo):
     mo.md(r"""### STL Viewer""")
     return
 
 
 @app.cell
-def __(Camera, Mesh, glm, meshio, mo, plt):
+def _(Camera, Mesh, glm, meshio, mo, plt):
     def show(
         filename,
         theta=0.0,
@@ -563,7 +1057,7 @@ def __(Camera, Mesh, glm, meshio, mo, plt):
 
 
 @app.cell
-def __(mo, show):
+def _(mo, show):
     mo.show_code(show("data/teapot.stl", theta=45.0, phi=30.0, scale=2))
     return
 
